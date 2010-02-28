@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="var" path="STAR_CLASS_ZIP"/>
+	<classpathentry kind="var" path="STAR_STARCLASS_ZIP"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/kxml2_2.3.0.jar"/>
+	<classpathentry kind="lib" path="E:/work/workspaces/star/MockViewer/lib/kxml2_2.3.0.jar"/>
+	<classpathentry kind="output" path="classes"/>
+</classpath>

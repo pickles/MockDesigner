@@ -1,0 +1,6 @@
+AppType = FullApp
+LastModified = Mon, 01 Mar 2010 02:37:59
+AppClass = mockviewer.MockViewer
+AppName = MockViewer
+PackageURL = MockViewer.jar
+AppSize = 36210
