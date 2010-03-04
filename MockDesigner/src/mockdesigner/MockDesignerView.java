@@ -436,11 +436,13 @@ public class MockDesignerView extends FrameView  {
         fileMenu.add(newMenuItem);
 
         openMenuItem.setAction(actionMap.get("openFileAction")); // NOI18N
+        openMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
         openMenuItem.setText(resourceMap.getString("openMenuItem.text")); // NOI18N
         openMenuItem.setName("openMenuItem"); // NOI18N
         fileMenu.add(openMenuItem);
 
         saveMenuItem.setAction(actionMap.get("saveFileAction")); // NOI18N
+        saveMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
         saveMenuItem.setText(resourceMap.getString("saveMenuItem.text")); // NOI18N
         saveMenuItem.setName("saveMenuItem"); // NOI18N
         fileMenu.add(saveMenuItem);
@@ -598,8 +600,11 @@ public class MockDesignerView extends FrameView  {
             try {
                 file = openFileChooser.getSelectedFile();
                 Document doc = new SAXBuilder().build(file);
-                Element root = doc.getRootElement();
-                Iterator it = root.getChildren().iterator();
+                Element page = doc.getRootElement();
+                int newW = Integer.parseInt(page.getAttributeValue("width"));
+                int newH = Integer.parseInt(page.getAttributeValue("height"));
+                
+                Iterator it = page.getChildren().iterator();
                 updatePropertiesView(null);
                 canvasPanel.componentManager.clearAll();
                 while(it.hasNext()) {
@@ -607,6 +612,8 @@ public class MockDesignerView extends FrameView  {
                     Component compnent = load(elem);
                     canvasPanel.componentManager.addComponent(compnent);
                 }
+                canvasPanel.setPreferredSize(new Dimension(newW, newH));
+                canvasPanel.setSize(newW, newH);
                 canvasPanel.repaint();
                 isDirty = false;
                 updateTitle();
