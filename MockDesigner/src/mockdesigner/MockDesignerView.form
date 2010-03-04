@@ -348,10 +348,7 @@
             <MenuItem class="javax.swing.JMenuItem" name="openMenuItem">
               <Properties>
                 <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
-                  <action class="mockdesigner.MockDesignerView" id="openFile" methodName="openFile"/>
-                </Property>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Ctrl+O"/>
+                  <action class="mockdesigner.MockDesignerView" id="openFileAction" methodName="openFileAction"/>
                 </Property>
                 <Property name="text" type="java.lang.String" resourceKey="openMenuItem.text"/>
                 <Property name="name" type="java.lang.String" value="openMenuItem" noResource="true"/>
@@ -360,10 +357,7 @@
             <MenuItem class="javax.swing.JMenuItem" name="saveMenuItem">
               <Properties>
                 <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
-                  <action class="mockdesigner.MockDesignerView" id="saveFile" methodName="saveFile"/>
-                </Property>
-                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
-                  <KeyStroke key="Ctrl+S"/>
+                  <action class="mockdesigner.MockDesignerView" id="saveFileAction" methodName="saveFileAction"/>
                 </Property>
                 <Property name="text" type="java.lang.String" resourceKey="saveMenuItem.text"/>
                 <Property name="name" type="java.lang.String" value="saveMenuItem" noResource="true"/>
@@ -372,7 +366,7 @@
             <MenuItem class="javax.swing.JMenuItem" name="saveAsMenuItem">
               <Properties>
                 <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
-                  <action class="mockdesigner.MockDesignerView" id="saveAsFile" methodName="saveAsFile"/>
+                  <action class="mockdesigner.MockDesignerView" id="saveAsFileAction" methodName="saveAsFileAction"/>
                 </Property>
                 <Property name="text" type="java.lang.String" resourceKey="saveAsMenuItem.text"/>
                 <Property name="name" type="java.lang.String" value="saveAsMenuItem" noResource="true"/>

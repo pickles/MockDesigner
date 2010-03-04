@@ -5,6 +5,7 @@
 package mockdesigner;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Point;
 import org.jdesktop.application.Action;
 import org.jdesktop.application.ResourceMap;
@@ -50,6 +51,8 @@ public class MockDesignerView extends FrameView  {
     private DefaultTableModel model;
 
     private File file;
+    public static String APP_NAME = "MockDesigner";
+    private boolean isDirty = false;
 
     public MockDesignerView(SingleFrameApplication app) {
         super(app);
@@ -133,8 +136,12 @@ public class MockDesignerView extends FrameView  {
         return p.x < 0 || canvas.getWidth() < p.x || p.y < 0 || canvas.getHeight() < p.y;
     }
 
-    public void updatePropertiesView(Map<String, Object> properties) {
+    public void updatePropertiesView(Component component) {
         System.out.println("Update property table.");
+        Map<String, Object> properties = null;
+        if (component != null)
+            properties = component.getProperties();
+        
         model.removeTableModelListener(canvasPanel);
         while (model.getRowCount() != 0) {
             model.removeRow(0);
@@ -428,19 +435,17 @@ public class MockDesignerView extends FrameView  {
         newMenuItem.setName("newMenuItem"); // NOI18N
         fileMenu.add(newMenuItem);
 
-        openMenuItem.setAction(actionMap.get("openFile")); // NOI18N
-        openMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
+        openMenuItem.setAction(actionMap.get("openFileAction")); // NOI18N
         openMenuItem.setText(resourceMap.getString("openMenuItem.text")); // NOI18N
         openMenuItem.setName("openMenuItem"); // NOI18N
         fileMenu.add(openMenuItem);
 
-        saveMenuItem.setAction(actionMap.get("saveFile")); // NOI18N
-        saveMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
+        saveMenuItem.setAction(actionMap.get("saveFileAction")); // NOI18N
         saveMenuItem.setText(resourceMap.getString("saveMenuItem.text")); // NOI18N
         saveMenuItem.setName("saveMenuItem"); // NOI18N
         fileMenu.add(saveMenuItem);
 
-        saveAsMenuItem.setAction(actionMap.get("saveAsFile")); // NOI18N
+        saveAsMenuItem.setAction(actionMap.get("saveAsFileAction")); // NOI18N
         saveAsMenuItem.setText(resourceMap.getString("saveAsMenuItem.text")); // NOI18N
         saveAsMenuItem.setName("saveAsMenuItem"); // NOI18N
         fileMenu.add(saveAsMenuItem);
@@ -582,7 +587,12 @@ public class MockDesignerView extends FrameView  {
     }
 
     @Action
-    public void openFile() {
+    public void openFileAction() {
+        if (isDirty) {
+            int opt = confirmAndSave();
+            if (opt == JOptionPane.CANCEL_OPTION) return;
+        }
+
         int status = openFileChooser.showOpenDialog(null);
         if (status == JFileChooser.APPROVE_OPTION) {
             try {
@@ -598,12 +608,35 @@ public class MockDesignerView extends FrameView  {
                     canvasPanel.componentManager.addComponent(compnent);
                 }
                 canvasPanel.repaint();
+                isDirty = false;
+                updateTitle();
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, "ファイルを読み込めませんでした。", "エラー", JOptionPane.ERROR_MESSAGE);
                 e.printStackTrace();
                 file = null;
             }
         }
+    }
+
+    public int confirmAndSave() {
+        int opt = JOptionPane.showConfirmDialog(null, "現在のファイルを保存しますか？");
+        if (opt == JOptionPane.YES_OPTION) {
+            if (saveFileAction()) return JOptionPane.YES_OPTION;
+            else return JOptionPane.CANCEL_OPTION;
+        }
+        return opt;
+    }
+
+    public void isDirty(boolean dirty) {
+        this.isDirty = dirty;
+        updateTitle();
+    }
+
+    public void updateTitle() {
+        String newTitle = APP_NAME;
+        if (file != null) newTitle += " - " + file.getName();
+        if (isDirty) newTitle += " *";
+        ((MockDesignerApp) getApplication()).getMainFrame().setTitle(newTitle);
     }
 
     private Component load(Element elem) {
@@ -620,24 +653,32 @@ public class MockDesignerView extends FrameView  {
     }
 
     @Action
-    public void saveFile() {
-        if (file == null) saveAsFile();
-        else save();
+    public boolean saveFileAction() {
+        boolean isSaved = false;
+        if (file == null)
+            isSaved = saveAsFileAction();
+        else 
+            isSaved = save();
+        return isSaved;
     }
 
     @Action
-    public void saveAsFile() {
+    public boolean saveAsFileAction() {
         int status = saveFileChooser.showSaveDialog(null);
+        boolean isSaved = false;
         if (status == JFileChooser.APPROVE_OPTION) {
             file = saveFileChooser.getSelectedFile();
-            save();
+            isSaved = save();
         }
+        return isSaved;
     }
 
-    private void save() {
+    private boolean save() {
         Writer out = null;
         try {
             Element page = new Element("page");
+            page.setAttribute("width", Integer.toString(canvasPanel.getWidth()));
+            page.setAttribute("height", Integer.toString(canvasPanel.getHeight()));
             Document document = new Document(page);
             for (Component component : canvasPanel.componentManager.getComponents()) {
                page.addContent(component.toXML());
@@ -648,6 +689,9 @@ public class MockDesignerView extends FrameView  {
             XMLOutputter xmlout = new XMLOutputter(format);
 
             xmlout.output(document, out);
+            isDirty = false;
+            updateTitle();
+            return true;
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "ファイルを保存できませんでした。", "エラー", JOptionPane.ERROR_MESSAGE);
         } finally {
@@ -657,13 +701,35 @@ public class MockDesignerView extends FrameView  {
                 } catch(Exception e) {}
             }
         }
+        return false;
     }
 
     @Action
     public void newAction() {
-        file = null;
-        updatePropertiesView(null);
-        canvasPanel.componentManager.clearAll();
+        if (isDirty) {
+            int opt = confirmAndSave();
+            if (opt == JOptionPane.CANCEL_OPTION) return;
+        }
+        
+        String newSize = JOptionPane.showInputDialog(null, "新しいキャンバスのサイズを入力してください（例:480x480）");
+        if (newSize == null || newSize.isEmpty()) return;
+        String[] data = newSize.split("x");
+        if (data.length != 2) return;
+        try {
+            int newW = Integer.parseInt(data[0]);
+            int newH = Integer.parseInt(data[1]);
+            canvasPanel.setPreferredSize(new Dimension(newW, newH));
+            canvasPanel.setSize(newW, newH);
+            
+            file = null;
+            updatePropertiesView(null);
+            canvasPanel.componentManager.clearAll();
+            isDirty = false;
+        } catch(Exception e) {
+            return;
+        }
+
+        updateTitle();
         canvasPanel.repaint();
     }
 

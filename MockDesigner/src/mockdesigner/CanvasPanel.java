@@ -96,7 +96,7 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
                 if (selectedComponent != null) {
                     selectedComponent.isSelect = true;
                     selectedComponent.startMove(currentPoint);
-                    view.updatePropertiesView(selectedComponent.getProperties());
+                    view.updatePropertiesView(selectedComponent);
                 } else {
                     view.updatePropertiesView(null);
                 }
@@ -124,17 +124,16 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
         candidate = null;
         if (!canceled && selectedTool == Tool.LINE) {
             Line line = createLine();
-            selectedComponent = line;
             componentManager.addComponent(line);
-            view.updatePropertiesView(selectedComponent.getProperties());
+            updateState(line);
         } else if (!canceled && (selectedTool == Tool.BORDER || selectedTool == Tool.BOX || selectedTool == Tool.FILL)) {
             Box box = createBox();
-            selectedComponent = box;
             componentManager.addComponent(box);
-            view.updatePropertiesView(selectedComponent.getProperties());
+            updateState(box);
         } else if (!canceled && selectedTool == Tool.SELECT) {
             if (selectedComponent != null && selectedComponent.isMoving()) {
                 selectedComponent.endMove();
+                view.isDirty(true);
             }
         }
         repaint();
@@ -205,7 +204,7 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
         if (selectedComponent != null && selectedComponent.isMoving()) {
             Point dist = new Point(currentPoint.x - prevPoint.x, currentPoint.y - prevPoint.y);
             selectedComponent.move(dist);
-            view.updatePropertiesView(selectedComponent.getProperties());
+            view.updatePropertiesView(selectedComponent);
         }
         repaint();
     }
@@ -221,7 +220,7 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
             componentManager.updateOrder();
         } catch (Exception ex) {
             ex.printStackTrace();
-            view.updatePropertiesView(selectedComponent.getProperties());
+            view.updatePropertiesView(selectedComponent);
         }
         repaint();
     }
@@ -230,30 +229,19 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
 
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
-        if (code == KeyEvent.VK_UP) {
-            if (selectedComponent != null && selectedComponent.y > 0) {
+        if (selectedComponent != null
+                && code == KeyEvent.VK_UP || code == KeyEvent.VK_DOWN
+                || code == KeyEvent.VK_RIGHT || code == KeyEvent.VK_LEFT) {
+            if (code == KeyEvent.VK_UP && selectedComponent.y > 0) {
                 selectedComponent.move(new Point(0, -1));
-                view.updatePropertiesView(selectedComponent.getProperties());
-                repaint();
-            }
-        } else if (code == KeyEvent.VK_DOWN) {
-            if (selectedComponent != null && selectedComponent.y < 240) {
+            } else if (code == KeyEvent.VK_DOWN && selectedComponent.y < this.getHeight()) {
                 selectedComponent.move(new Point(0, 1));
-                view.updatePropertiesView(selectedComponent.getProperties());
-                repaint();
-            }
-        } else if (code == KeyEvent.VK_LEFT) {
-            if (selectedComponent != null && selectedComponent.x > 0) {
+            } else if (code == KeyEvent.VK_LEFT && selectedComponent.x > 0) {
                 selectedComponent.move(new Point(-1, 0));
-                view.updatePropertiesView(selectedComponent.getProperties());
-                repaint();
-            }
-        } else if (code == KeyEvent.VK_RIGHT) {
-            if (selectedComponent != null && selectedComponent.x < 240) {
+            } else if (code == KeyEvent.VK_RIGHT && selectedComponent.x < this.getWidth()) {
                 selectedComponent.move(new Point(1, 0));
-                view.updatePropertiesView(selectedComponent.getProperties());
-                repaint();
             }
+            updateState(selectedComponent);
         }
     }
 
@@ -268,8 +256,7 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
                 cancelAction();
                 componentManager.removeComponent(selectedComponent);
                 selectedComponent = null;
-                view.updatePropertiesView(null);
-                repaint();
+                updateState(null);
             }
         } else if (code == KeyEvent.VK_C && mod == KeyEvent.CTRL_MASK) {
             System.out.println("Copy");
@@ -283,10 +270,15 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
                 copy.x = currentPoint.x;
                 copy.y = currentPoint.y;
                 componentManager.addComponent(copy);
-                selectedComponent = copy;
-                view.updatePropertiesView(copy.getProperties());
-                repaint();
+                updateState(copy);
             }
         }
+    }
+
+    private void updateState(Component c) {
+        selectedComponent = c;
+        view.updatePropertiesView(c);
+        view.isDirty(true);
+        repaint();
     }
 }
