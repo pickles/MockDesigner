@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="Windows-31J"?>
-<page>
-  <line x="9" y="34" z="0" width="142" height="34" borderColor="000000" backgroundColor="ffffff" />
-  <box x="36" y="76" z="1" width="65" height="35" borderColor="000000" backgroundColor="" text="" textColor="000000" textAlign="Left" />
-  <line x="100" y="58" z="2" width="149" height="122" borderColor="000000" backgroundColor="ffffff" />
-  <box x="32" y="142" z="3" width="72" height="44" borderColor="000000" backgroundColor="" text="" textColor="000000" textAlign="Left" />
-  <box x="85" y="132" z="4" width="42" height="31" borderColor="000000" backgroundColor="ffffff" text="" textColor="000000" textAlign="Left" />
-  <box x="58" y="172" z="5" width="69" height="59" borderColor="" backgroundColor="00ff00" text="" textColor="000000" textAlign="Left" />
-  <box x="25" y="126" z="6" width="33" height="32" borderColor="" backgroundColor="66ccff" text="" textColor="000000" textAlign="Left" />
+<page width="240" height="240">
+  <box Text="こんにちは①" FontSize="24" FontType="italic" TextColor="000000" vAlign="center" hAlign="center" x="17" y="18" z="0" Width="201" Height="75" BackgroundColor="" BorderColor="000000" />
+  <box Text="loope.gif" FontSize="12" FontType="plain" TextColor="000000" vAlign="bottom" hAlign="right" x="41" y="189" z="1" Width="120" Height="36" BackgroundColor="00ffff" BorderColor="ff0066" />
+  <image ImagePath="" x="35" y="166" z="2" Width="48" Height="48" BackgroundColor="ffffff" BorderColor="000000" />
+  <line x="161" y="189" z="3" Width="177" Height="167" BackgroundColor="ffffff" BorderColor="ff0066" />
+  <image ImagePath="c:\loope.gif" x="174" y="149" z="4" Width="16" Height="17" BackgroundColor="ffffff" BorderColor="000000" />
+  <box Text="" FontSize="12" FontType="plain" TextColor="000000" vAlign="Top" hAlign="Left" x="155" y="142" z="5" Width="55" Height="25" BackgroundColor="" BorderColor="ff0066" />
 </page>
 
