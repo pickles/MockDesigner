@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package mockdesigner.component;
 
 import java.awt.Color;
@@ -16,7 +11,7 @@ import static org.junit.Assert.*;
 
 /**
  *
- * @author pickles
+ * @author Manabu Shibata
  */
 public class ComponentTest {
 

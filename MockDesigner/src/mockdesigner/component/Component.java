@@ -34,7 +34,7 @@ public abstract class Component {
     @Property("BackgroundColor")
     public Color backgroundColor = Color.WHITE;
 
-    @Property("BordeColor")
+    @Property("BorderColor")
     public Color borderColor = Color.BLACK;
 
     private Memento mementoForCancel;
@@ -190,7 +190,11 @@ public abstract class Component {
                 if (field.getType() == Color.class) {
                     component.setAttribute(prop.value(), colorToString((Color) field.get(this)));
                 } else {
-                    component.setAttribute(prop.value(), field.get(this).toString());
+                    Object value = field.get(this);
+                    if (value == null)
+                        component.setAttribute(prop.value(), "");
+                    else
+                        component.setAttribute(prop.value(), field.get(this).toString());
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
