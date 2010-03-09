@@ -32,6 +32,7 @@ import javax.swing.table.DefaultTableModel;
 import mockdesigner.component.Box;
 import mockdesigner.component.Component;
 import mockdesigner.component.Line;
+import mockdesigner.component.Picture;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -137,7 +138,6 @@ public class MockDesignerView extends FrameView  {
     }
 
     public void updatePropertiesView(Component component) {
-        System.out.println("Update property table.");
         Map<String, Object> properties = null;
         if (component != null)
             properties = component.getProperties();
@@ -177,18 +177,19 @@ public class MockDesignerView extends FrameView  {
     private void initComponents() {
 
         mainPanel = new javax.swing.JPanel();
+        canvas = new CanvasPanel();
+        colorPanel = new javax.swing.JPanel();
+        color1Box = new javax.swing.JPanel();
+        color2Box = new javax.swing.JPanel();
         toolPanel = new javax.swing.JPanel();
         selectButton = new javax.swing.JToggleButton();
         lineButton = new javax.swing.JToggleButton();
+        borderButton = new javax.swing.JToggleButton();
         boxButton = new javax.swing.JToggleButton();
         fillButton = new javax.swing.JToggleButton();
-        borderButton = new javax.swing.JToggleButton();
-        canvas = new CanvasPanel();
+        imageButton = new javax.swing.JToggleButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         propertyTable = new javax.swing.JTable();
-        jPanel1 = new javax.swing.JPanel();
-        color1Box = new javax.swing.JPanel();
-        color2Box = new javax.swing.JPanel();
         menuBar = new javax.swing.JMenuBar();
         javax.swing.JMenu fileMenu = new javax.swing.JMenu();
         newMenuItem = new javax.swing.JMenuItem();
@@ -212,67 +213,7 @@ public class MockDesignerView extends FrameView  {
 
         mainPanel.setName("mainPanel"); // NOI18N
 
-        toolPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        toolPanel.setName("toolPanel"); // NOI18N
-
-        javax.swing.ActionMap actionMap = org.jdesktop.application.Application.getInstance(mockdesigner.MockDesignerApp.class).getContext().getActionMap(MockDesignerView.class, this);
-        selectButton.setAction(actionMap.get("selectSelect")); // NOI18N
-        toolGroup.add(selectButton);
         org.jdesktop.application.ResourceMap resourceMap = org.jdesktop.application.Application.getInstance(mockdesigner.MockDesignerApp.class).getContext().getResourceMap(MockDesignerView.class);
-        selectButton.setIcon(resourceMap.getIcon("selectButton.icon")); // NOI18N
-        selectButton.setText(resourceMap.getString("selectButton.text")); // NOI18N
-        selectButton.setName("selectButton"); // NOI18N
-
-        lineButton.setAction(actionMap.get("selectLine")); // NOI18N
-        toolGroup.add(lineButton);
-        lineButton.setText(resourceMap.getString("lineButton.text")); // NOI18N
-        lineButton.setName("lineButton"); // NOI18N
-
-        boxButton.setAction(actionMap.get("selectBox")); // NOI18N
-        toolGroup.add(boxButton);
-        boxButton.setText(resourceMap.getString("boxButton.text")); // NOI18N
-        boxButton.setName("boxButton"); // NOI18N
-
-        fillButton.setAction(actionMap.get("selectFill")); // NOI18N
-        toolGroup.add(fillButton);
-        fillButton.setText(resourceMap.getString("fillButton.text")); // NOI18N
-        fillButton.setName("fillButton"); // NOI18N
-
-        borderButton.setAction(actionMap.get("selectBorder")); // NOI18N
-        toolGroup.add(borderButton);
-        borderButton.setText(resourceMap.getString("borderButton.text")); // NOI18N
-        borderButton.setName("borderButton"); // NOI18N
-
-        javax.swing.GroupLayout toolPanelLayout = new javax.swing.GroupLayout(toolPanel);
-        toolPanel.setLayout(toolPanelLayout);
-        toolPanelLayout.setHorizontalGroup(
-            toolPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(toolPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(toolPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(selectButton, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
-                    .addComponent(lineButton, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
-                    .addComponent(fillButton, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
-                    .addComponent(boxButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
-                    .addComponent(borderButton, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addContainerGap())
-        );
-        toolPanelLayout.setVerticalGroup(
-            toolPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(toolPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(selectButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lineButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(borderButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(boxButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(fillButton)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
         canvas.setBackground(resourceMap.getColor("canvas.background")); // NOI18N
         canvas.setMinimumSize(new java.awt.Dimension(240, 240));
         canvas.setName("canvas"); // NOI18N
@@ -305,39 +246,8 @@ public class MockDesignerView extends FrameView  {
             .addGap(0, 240, Short.MAX_VALUE)
         );
 
-        jScrollPane2.setName("jScrollPane2"); // NOI18N
-
-        propertyTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "プロパティ", "値"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class
-            };
-            boolean[] canEdit = new boolean [] {
-                false, true
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        propertyTable.setName("propertyTable"); // NOI18N
-        propertyTable.getTableHeader().setReorderingAllowed(false);
-        jScrollPane2.setViewportView(propertyTable);
-        propertyTable.getColumnModel().getColumn(0).setHeaderValue(resourceMap.getString("propertyTable.columnModel.title0")); // NOI18N
-        propertyTable.getColumnModel().getColumn(1).setHeaderValue(resourceMap.getString("propertyTable.columnModel.title1")); // NOI18N
-
-        jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        jPanel1.setName("jPanel1"); // NOI18N
+        colorPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        colorPanel.setName("colorPanel"); // NOI18N
 
         color1Box.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
         color1Box.setName("color1Box"); // NOI18N
@@ -377,51 +287,154 @@ public class MockDesignerView extends FrameView  {
             .addGap(0, 14, Short.MAX_VALUE)
         );
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout colorPanelLayout = new javax.swing.GroupLayout(colorPanel);
+        colorPanel.setLayout(colorPanelLayout);
+        colorPanelLayout.setHorizontalGroup(
+            colorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(colorPanelLayout.createSequentialGroup()
                 .addGap(22, 22, 22)
                 .addComponent(color1Box, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(color2Box, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(27, Short.MAX_VALUE))
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(25, 25, 25)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        colorPanelLayout.setVerticalGroup(
+            colorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, colorPanelLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(colorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(color2Box, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(color1Box, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(36, Short.MAX_VALUE))
+                .addContainerGap())
         );
+
+        toolPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        toolPanel.setName("toolPanel"); // NOI18N
+
+        javax.swing.ActionMap actionMap = org.jdesktop.application.Application.getInstance(mockdesigner.MockDesignerApp.class).getContext().getActionMap(MockDesignerView.class, this);
+        selectButton.setAction(actionMap.get("selectSelect")); // NOI18N
+        toolGroup.add(selectButton);
+        selectButton.setIcon(resourceMap.getIcon("selectButton.icon")); // NOI18N
+        selectButton.setText(resourceMap.getString("selectButton.text")); // NOI18N
+        selectButton.setName("selectButton"); // NOI18N
+
+        lineButton.setAction(actionMap.get("selectLine")); // NOI18N
+        toolGroup.add(lineButton);
+        lineButton.setText(resourceMap.getString("lineButton.text")); // NOI18N
+        lineButton.setName("lineButton"); // NOI18N
+
+        borderButton.setAction(actionMap.get("selectBorder")); // NOI18N
+        toolGroup.add(borderButton);
+        borderButton.setText(resourceMap.getString("borderButton.text")); // NOI18N
+        borderButton.setName("borderButton"); // NOI18N
+
+        boxButton.setAction(actionMap.get("selectBox")); // NOI18N
+        toolGroup.add(boxButton);
+        boxButton.setText(resourceMap.getString("boxButton.text")); // NOI18N
+        boxButton.setName("boxButton"); // NOI18N
+
+        fillButton.setAction(actionMap.get("selectFill")); // NOI18N
+        toolGroup.add(fillButton);
+        fillButton.setText(resourceMap.getString("fillButton.text")); // NOI18N
+        fillButton.setName("fillButton"); // NOI18N
+
+        imageButton.setAction(actionMap.get("selectImage")); // NOI18N
+        toolGroup.add(imageButton);
+        imageButton.setText(resourceMap.getString("imageButton.text")); // NOI18N
+        imageButton.setName("imageButton"); // NOI18N
+
+        javax.swing.GroupLayout toolPanelLayout = new javax.swing.GroupLayout(toolPanel);
+        toolPanel.setLayout(toolPanelLayout);
+        toolPanelLayout.setHorizontalGroup(
+            toolPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(toolPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(toolPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(imageButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
+                    .addComponent(selectButton, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
+                    .addComponent(lineButton, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
+                    .addComponent(fillButton, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
+                    .addComponent(boxButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE)
+                    .addComponent(borderButton, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        toolPanelLayout.setVerticalGroup(
+            toolPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(toolPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(selectButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lineButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(borderButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(boxButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(fillButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(imageButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        imageButton.setPreferredSize(new Dimension(67,21));
+        imageButton.setSize(67,21);
+        imageButton.setText("Image");
+
+        jScrollPane2.setName("jScrollPane2"); // NOI18N
+
+        propertyTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "プロパティ", "値"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, true
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        propertyTable.setName("propertyTable"); // NOI18N
+        propertyTable.getTableHeader().setReorderingAllowed(false);
+        jScrollPane2.setViewportView(propertyTable);
+        propertyTable.getColumnModel().getColumn(0).setHeaderValue(resourceMap.getString("propertyTable.columnModel.title0")); // NOI18N
+        propertyTable.getColumnModel().getColumn(1).setHeaderValue(resourceMap.getString("propertyTable.columnModel.title1")); // NOI18N
 
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
         mainPanelLayout.setHorizontalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
-                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(toolPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(toolPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(colorPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(canvas, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 271, Short.MAX_VALUE))
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
-                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, mainPanelLayout.createSequentialGroup()
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(mainPanelLayout.createSequentialGroup()
                         .addComponent(toolPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(canvas, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(colorPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(canvas, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(54, Short.MAX_VALUE))
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 294, Short.MAX_VALUE)
         );
 
         menuBar.setName("menuBar"); // NOI18N
@@ -430,19 +443,16 @@ public class MockDesignerView extends FrameView  {
         fileMenu.setName("fileMenu"); // NOI18N
 
         newMenuItem.setAction(actionMap.get("newAction")); // NOI18N
-        newMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_MASK));
         newMenuItem.setText(resourceMap.getString("newMenuItem.text")); // NOI18N
         newMenuItem.setName("newMenuItem"); // NOI18N
         fileMenu.add(newMenuItem);
 
         openMenuItem.setAction(actionMap.get("openFileAction")); // NOI18N
-        openMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
         openMenuItem.setText(resourceMap.getString("openMenuItem.text")); // NOI18N
         openMenuItem.setName("openMenuItem"); // NOI18N
         fileMenu.add(openMenuItem);
 
         saveMenuItem.setAction(actionMap.get("saveFileAction")); // NOI18N
-        saveMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
         saveMenuItem.setText(resourceMap.getString("saveMenuItem.text")); // NOI18N
         saveMenuItem.setName("saveMenuItem"); // NOI18N
         fileMenu.add(saveMenuItem);
@@ -489,13 +499,13 @@ public class MockDesignerView extends FrameView  {
         statusPanel.setLayout(statusPanelLayout);
         statusPanelLayout.setHorizontalGroup(
             statusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(statusPanelSeparator, javax.swing.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE)
+            .addComponent(statusPanelSeparator, javax.swing.GroupLayout.DEFAULT_SIZE, 625, Short.MAX_VALUE)
             .addGroup(statusPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(coordinateLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(statusMessageLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 424, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 429, Short.MAX_VALUE)
                 .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(statusAnimationLabel)
@@ -599,39 +609,13 @@ public class MockDesignerView extends FrameView  {
         if (status == JFileChooser.APPROVE_OPTION) {
             try {
                 file = openFileChooser.getSelectedFile();
-                Document doc = new SAXBuilder().build(file);
-                Element page = doc.getRootElement();
-                int newW = Integer.parseInt(page.getAttributeValue("width"));
-                int newH = Integer.parseInt(page.getAttributeValue("height"));
-                
-                Iterator it = page.getChildren().iterator();
-                updatePropertiesView(null);
-                canvasPanel.componentManager.clearAll();
-                while(it.hasNext()) {
-                    Element elem = (Element) it.next();
-                    Component compnent = load(elem);
-                    canvasPanel.componentManager.addComponent(compnent);
-                }
-                canvasPanel.setPreferredSize(new Dimension(newW, newH));
-                canvasPanel.setSize(newW, newH);
-                canvasPanel.repaint();
-                isDirty = false;
-                updateTitle();
+                load(file);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, "ファイルを読み込めませんでした。", "エラー", JOptionPane.ERROR_MESSAGE);
                 e.printStackTrace();
                 file = null;
             }
         }
-    }
-
-    public int confirmAndSave() {
-        int opt = JOptionPane.showConfirmDialog(null, "現在のファイルを保存しますか？");
-        if (opt == JOptionPane.YES_OPTION) {
-            if (saveFileAction()) return JOptionPane.YES_OPTION;
-            else return JOptionPane.CANCEL_OPTION;
-        }
-        return opt;
     }
 
     public void isDirty(boolean dirty) {
@@ -646,7 +630,28 @@ public class MockDesignerView extends FrameView  {
         ((MockDesignerApp) getApplication()).getMainFrame().setTitle(newTitle);
     }
 
-    private Component load(Element elem) {
+    private void load(File file) throws Exception {
+        Document doc = new SAXBuilder().build(file);
+        Element page = doc.getRootElement();
+        int newW = Integer.parseInt(page.getAttributeValue("width"));
+        int newH = Integer.parseInt(page.getAttributeValue("height"));
+
+        Iterator it = page.getChildren().iterator();
+        updatePropertiesView(null);
+        canvasPanel.componentManager.clearAll();
+        while(it.hasNext()) {
+            Element elem = (Element) it.next();
+            Component compnent = loadComponent(elem);
+            canvasPanel.componentManager.addComponent(compnent);
+        }
+        canvasPanel.setPreferredSize(new Dimension(newW, newH));
+        canvasPanel.setSize(newW, newH);
+        canvasPanel.repaint();
+        isDirty = false;
+        updateTitle();
+    }
+    
+    private Component loadComponent(Element elem) {
         if (elem.getName().equalsIgnoreCase("line")) {
             Line line = new Line();
             line.build(elem);
@@ -655,6 +660,10 @@ public class MockDesignerView extends FrameView  {
             Box box = new Box();
             box.build(elem);
             return box;
+        } else if (elem.getName().equalsIgnoreCase("image")) {
+            Picture pic = new Picture();
+            pic.build(elem);
+            return pic;
         }
         throw new IllegalArgumentException("Unknown element " + elem.getName());
     }
@@ -669,6 +678,15 @@ public class MockDesignerView extends FrameView  {
         return isSaved;
     }
 
+    public int confirmAndSave() {
+        int opt = JOptionPane.showConfirmDialog(null, "現在のファイルを保存しますか？");
+        if (opt == JOptionPane.YES_OPTION) {
+            if (saveFileAction()) return JOptionPane.YES_OPTION;
+            else return JOptionPane.CANCEL_OPTION;
+        }
+        return opt;
+    }
+    
     @Action
     public boolean saveAsFileAction() {
         int status = saveFileChooser.showSaveDialog(null);
@@ -700,6 +718,7 @@ public class MockDesignerView extends FrameView  {
             updateTitle();
             return true;
         } catch (Exception e) {
+            e.printStackTrace();
             JOptionPane.showMessageDialog(null, "ファイルを保存できませんでした。", "エラー", JOptionPane.ERROR_MESSAGE);
         } finally {
             if (out != null) {
@@ -740,6 +759,11 @@ public class MockDesignerView extends FrameView  {
         canvasPanel.repaint();
     }
 
+    @Action
+    public void selectImage() {
+        canvasPanel.selectedTool = Tool.IMAGE;
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton borderButton;
     private javax.swing.JToggleButton boxButton;
@@ -747,9 +771,10 @@ public class MockDesignerView extends FrameView  {
     private javax.swing.JPanel color1Box;
     private javax.swing.JPanel color2Box;
     private javax.swing.JColorChooser colorChooser;
+    private javax.swing.JPanel colorPanel;
     private javax.swing.JLabel coordinateLabel;
     private javax.swing.JToggleButton fillButton;
-    private javax.swing.JPanel jPanel1;
+    private javax.swing.JToggleButton imageButton;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JToggleButton lineButton;

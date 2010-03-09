@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package mockdesigner.component;
 
 import java.awt.Color;
@@ -10,8 +5,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Point;
-import java.util.Map;
-import org.jdom.Element;
+import mockdesigner.anotation.Property;
 
 /**
  *
@@ -21,18 +15,23 @@ public class Box extends Component {
 
     public Font font = new Font("ＭＳ ゴシック", Font.PLAIN, 12);
 
+    @Property("Text")
     public String text = "";
-    public Color textColor = Color.black;
-    public String textAlign = "Left";
 
-    @Override
-    public Map<String, Object> getProperties() {
-        Map<String, Object> properties = super.getProperties();
-        properties.put("Text", text);
-        properties.put("Text align", textAlign);
-        properties.put("Text color", colorToString(textColor));
-        return properties;
-    }
+    @Property("FontSize")
+    public int fontSize = 12;
+
+    @Property("FontType")
+    public String fontType = "plain";
+
+    @Property("TextColor")
+    public Color textColor = Color.black;
+
+    @Property("vAlign")
+    public String vAlign = "Top";
+
+    @Property("hAlign")
+    public String hAlign = "Left";
 
     @Override
     public void paint(Graphics g) {
@@ -60,32 +59,42 @@ public class Box extends Component {
         g.setColor(orgColor);
     }
 
-    public Point calcTextOffset(Graphics g) {
+    protected Point calcTextOffset(Graphics g) {
         FontMetrics fm = g.getFontMetrics();
         int strWidth = fm.stringWidth(text);
         Point p = new Point(x, y);
-        p.y += fm.getAscent();
         
-        if (textAlign.equalsIgnoreCase("Left")) {
-            if (borderColor != null) {
-                p.x += 3; //罫線1pxとその間に2pxの余白
-                p.y += 2; //罫線1pxとその間に1pxの余白
-            }
-        } else if (textAlign.equalsIgnoreCase("Center")) {
-            p.x = (x + x + width) / 2 - strWidth / 2;
-            if (borderColor != null) {
-                p.y += 2;
-            }
-        } else if (textAlign.equalsIgnoreCase("Right")) {
+        if (hAlign.equalsIgnoreCase("Center")) {
+            p.x = (x + x + width - strWidth) / 2;
+        } else if (hAlign.equalsIgnoreCase("Right")) {
             p.x = x + width - strWidth;
             if (borderColor != null) {
                 p.x -= 2; //罫線1pxとその間に1pxの余白
+            }
+        } else { // Left
+            if (borderColor != null) {
+                p.x += 3; //罫線1pxとその間に2pxの余白
+            }
+        }
+
+        if (vAlign.equalsIgnoreCase("Center")) {
+            p.y = (height - fm.getHeight()) / 2 + y + fm.getAscent();
+        } else if (vAlign.equalsIgnoreCase("Bottom")) {
+            p.y = (y + height - fm.getLeading());
+            if (borderColor != null) {
+                p.y -= 1;
+            }
+        } else {
+            p.y += fm.getAscent();
+            if (borderColor != null) {
                 p.y += 2; //罫線1pxとその間に1pxの余白
             }
         }
+        
         return p;
     }
-    
+
+    @Override
     public boolean isOn(Point p) {
         if (x <= p.x && p.x <= x + width && y <= p.y && p.y <= y + height)
             return true;
@@ -117,51 +126,27 @@ public class Box extends Component {
     @Override
     public void updateProperty(String name, String value) {
         super.updateProperty(name, value);
-        if ("Text".equals(name)) {
-            text = value;
-        } else if ("Text align".equals(name)) {
-            if (value.equalsIgnoreCase("Left") ||
-                    value.equalsIgnoreCase("Center") ||
-                    value.equalsIgnoreCase("Right")) {
-                textAlign = value;
-            } else {
-                throw new IllegalArgumentException("Invalid text align [" + value +"]");
-            }
-        } else if ("Text color".equals(name)) {
-            textColor = stringToColor(value);
-        }
+        updateFont();
     }
 
     @Override
-    public Component copy() {
-        Box copy = new Box();
-        migrate(copy);
-        copy.text = text;
-        copy.textAlign = textAlign;
-        if (textColor != null)
-            copy.textColor = new Color(textColor.getRGB());
+    public void afterBuild() {
+        updateFont();
+    }
+
+    protected void updateFont() {
+        int type = Font.PLAIN;
+        if (fontType.equalsIgnoreCase("bold")) {
+            type = Font.BOLD;
+        } else if (fontType.equalsIgnoreCase("italic")) {
+            type = Font.ITALIC;
+        }
         
-        return copy;
+        font = new Font("ＭＳ ゴシック", type, fontSize);
     }
 
-    public Element toXML() {
-        Element element = toXML("box");
-        element.setAttribute("text", text);
-        element.setAttribute("textColor", colorToString(textColor));
-        element.setAttribute("textAlign", textAlign);
-        return element;
-    }
-
-    public void build(Element elem) {
-        x = getIntProperty(elem.getAttributeValue("x"), true);
-        y = getIntProperty(elem.getAttributeValue("y"), true);
-        z = getIntProperty(elem.getAttributeValue("z"), true);
-        width = getIntProperty(elem.getAttributeValue("width"), true);
-        height = getIntProperty(elem.getAttributeValue("height"), true);
-        borderColor = getColorProperty(elem.getAttributeValue("borderColor"), false);
-        backgroundColor = getColorProperty(elem.getAttributeValue("backgroundColor"), false);
-        text =  elem.getAttributeValue("text");
-        textAlign = elem.getAttributeValue("textAlign");
-        textColor = getColorProperty(elem.getAttributeValue("textColor"), false);
+    @Override
+    public String getComponentName() {
+        return "box";
     }
 }

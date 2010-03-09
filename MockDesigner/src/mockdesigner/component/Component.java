@@ -1,53 +1,97 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package mockdesigner.component;
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import mockdesigner.anotation.Property;
 import org.jdom.Element;
 
 /**
- *
  * @author Manabu Shibata
  */
 public abstract class Component {
 
+    @Property("x")
     public int x;
+
+    @Property("y")
     public int y;
+
+    @Property("z")
     public int z;
 
-    public int height;
+    @Property("Width")
     public int width;
-    
+
+    @Property("Height")
+    public int height;
+
+    @Property("BackgroundColor")
     public Color backgroundColor = Color.WHITE;
+
+    @Property("BordeColor")
     public Color borderColor = Color.BLACK;
 
-    public int originalX;
-    public int originalY;
-    public int originalW;
-    public int originalH;
+    private Memento mementoForCancel;
+    
     public boolean isMoving = false;
 
     public boolean isSelect = false;
 
     protected static final int RADIUS = 4;
 
+    protected List<Field> getProperyFields() {
+        List<Field> fields = new ArrayList<Field>();
+        for (Class clazz = this.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
+            for (Field candidate : clazz.getDeclaredFields()) {
+                if (candidate.getAnnotation(Property.class) != null) {
+                    fields.add(candidate);
+                }
+            }
+        }
+        return fields;
+    }
+    
     public Map<String, Object> getProperties() {
         Map<String, Object> properties = new TreeMap<String, Object>();
-        properties.put("x", x);
-        properties.put("y", y);
-        properties.put("z", z);
-        properties.put("width", width);
-        properties.put("height", height);
-        properties.put("Border color", colorToString(borderColor));
-        properties.put("Background color", colorToString(backgroundColor));
+
+        for (Field field : getProperyFields()) {
+            Property prop = field.getAnnotation(Property.class);
+            try {
+                Object value = field.get(this);
+                if (value != null) {
+                    if (value instanceof Color) {
+                        properties.put(prop.value(), colorToString((Color) value));
+                    } else {
+                        properties.put(prop.value(), value.toString());
+                    }
+                } else {
+                    properties.put(prop.value(), "");
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
         return properties;
+    }
+
+    public Memento createMemento(String command) {
+        Memento memento = new Memento(this, command);
+        for (Map.Entry<String, Object> entry : getProperties().entrySet()) {
+            memento.addProperty(entry.getKey(), entry.getValue());
+        }
+        return memento;
+    }
+
+    public void restore(Memento memento) {
+        for (Map.Entry<String, Object> entry : memento.getProperties().entrySet()) {
+            this.updateProperty(entry.getKey(), (String) entry.getValue());
+        }
     }
         
     protected enum MoveType {
@@ -65,20 +109,16 @@ public abstract class Component {
     }
     
     public abstract void paint(Graphics g);
+
     public abstract boolean isOn(Point p);
+
     public void startMove(Point p) {
-        originalX = x;
-        originalY = y;
-        originalW = width;
-        originalH = height;
+        mementoForCancel = createMemento("update");
         isMoving = true;
     }
     
     public void cancelMove() {
-        x = originalX;
-        y = originalY;
-        width = originalW;
-        height = originalH;
+        restore(mementoForCancel);
         moveType = null;
         isMoving = false;
     }
@@ -89,25 +129,27 @@ public abstract class Component {
         moveType = null;
         isMoving = false;
     }
+
     public boolean isMoving() {
         return isMoving;
     }
 
     public void updateProperty(String name, String value) {
-        if ("x".equals(name)) {
-            x = Integer.parseInt(value);
-        } else if ("y".equals(name)) {
-            y = Integer.parseInt(value);
-        } else if ("z".equals(name)) {
-            z = Integer.parseInt(value);
-        } else if ("width".equals(name)) {
-            width = Integer.parseInt(value);
-        } else if ("height".equals(name)) {
-            height = Integer.parseInt(value);
-        } else if ("Border color".equals(name)) {
-            borderColor = stringToColor(value);
-        } else if ("Background color".equals(name)) {
-            backgroundColor = stringToColor(value);
+        for (Field field : getProperyFields()) {
+            Property prop = field.getAnnotation(Property.class);
+            if (prop.value().equalsIgnoreCase(name)) {
+                try {
+                    if (field.getType() == Integer.TYPE) {
+                        field.setInt(this, Integer.parseInt((String) value));
+                    } else if (field.getType() == Color.class) {
+                        field.set(this, stringToColor((String) value));
+                    } else {
+                        field.set(this, value);
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 
@@ -129,34 +171,46 @@ public abstract class Component {
         return new Color(r, g, b);
     }
 
-    public abstract Component copy();
-    protected void migrate(Component c) {
-        c.x = x;
-        c.y = y;
-        c.z = z;
-        c.width = width;
-        c.height = height;
-        if (borderColor != null)
-            c.borderColor = new Color(borderColor.getRGB());
-        if (backgroundColor != null)
-            c.backgroundColor = new Color(backgroundColor.getRGB());
+    public Component copy() {
+        try {
+            Component copy = (Component) getClass().newInstance();
+            copy.restore(createMemento("copy"));
+            return copy;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 
-    public abstract Element toXML();
-    
-    public Element toXML(String name) {
-        Element component = new Element(name);
-        component.setAttribute("x", Integer.toString(x));
-        component.setAttribute("y", Integer.toString(y));
-        component.setAttribute("z", Integer.toString(z));
-        component.setAttribute("width", Integer.toString(width));
-        component.setAttribute("height", Integer.toString(height));
-        component.setAttribute("borderColor", colorToString(borderColor));
-        component.setAttribute("backgroundColor", colorToString(backgroundColor));
+    public Element toXML() {
+        Element component = new Element(getComponentName());
+        for (Field field : getProperyFields()) {
+            Property prop = field.getAnnotation(Property.class);
+            try {
+                if (field.getType() == Color.class) {
+                    component.setAttribute(prop.value(), colorToString((Color) field.get(this)));
+                } else {
+                    component.setAttribute(prop.value(), field.get(this).toString());
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         return component;
     }
 
-        public int getIntProperty(String s, boolean require) {
+    public void build(Element element) {
+        for (Field field : getProperyFields()) {
+            Property prop = field.getAnnotation(Property.class);
+            updateProperty(prop.value(), element.getAttributeValue(prop.value()));
+        }
+        afterBuild();
+    }
+
+    protected void afterBuild() {}
+
+    public int getIntProperty(String s, boolean require) {
         if (s == null || s.isEmpty()) {
             if (require)
                 throw new IllegalArgumentException("null");
@@ -177,4 +231,7 @@ public abstract class Component {
 
         return stringToColor(s);
     }
+
+    public abstract String getComponentName();
+    
 }

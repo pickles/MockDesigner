@@ -1,21 +1,20 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package mockdesigner.component;
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;
-import org.jdom.Element;
 
 /**
- *
  * @author Manabu Shibata
  */
 public class Line extends Component {
 
+    @Override
+    public String getComponentName() {
+        return "line";
+    }
+
+    @Override
     public void paint(Graphics g) {
         Color orgColor = g.getColor();
         
@@ -24,6 +23,7 @@ public class Line extends Component {
         g.setColor(orgColor);
     }
 
+    @Override
     public boolean isOn(Point p) {
         Point startPoint = new Point(x, y);
         Point endPoint = new Point(width, height);
@@ -34,7 +34,6 @@ public class Line extends Component {
         Point c = new Point(p.x - startPoint.x, p.y - startPoint.y);
         // 内積
         int n1 = dotProduct(v, c);
-        System.out.println("n1 : " + n1);
         if (n1 < 0) {
             // cの長さが円の半径より小さい場合は交差している
             return distance(startPoint, p) < RADIUS ? true : false;
@@ -80,27 +79,5 @@ public class Line extends Component {
             height += dist.y;
         }
     }
-
-    public Component copy() {
-        Line copy = new Line();
-        migrate(copy);
-        return copy;
-    }
-
-    @Override
-    public Element toXML() {
-        return toXML("line");
-    }
-
-    public void build(Element elem) {
-        x = getIntProperty(elem.getAttributeValue("x"), true);
-        y = getIntProperty(elem.getAttributeValue("y"), true);
-        z = getIntProperty(elem.getAttributeValue("z"), true);
-        width = getIntProperty(elem.getAttributeValue("width"), true);
-        height = getIntProperty(elem.getAttributeValue("height"), true);
-        borderColor = getColorProperty(elem.getAttributeValue("borderColor"), true);
-        backgroundColor = getColorProperty(elem.getAttributeValue("backgroundColor"), false);
-    }
-
 
 }

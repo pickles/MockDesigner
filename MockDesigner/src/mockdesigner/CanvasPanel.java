@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package mockdesigner;
 
 import java.awt.Color;
@@ -20,9 +15,10 @@ import javax.swing.table.TableModel;
 import mockdesigner.component.Box;
 import mockdesigner.component.Component;
 import mockdesigner.component.Line;
+import mockdesigner.component.Memento;
+import mockdesigner.component.Picture;
 
 /**
- *
  * @author Manabu Shibata
  */
 public class CanvasPanel extends JPanel implements MouseListener, MouseMotionListener, TableModelListener, KeyListener {
@@ -41,6 +37,8 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
     Point currentPoint;
     Component selectedComponent;
 
+    MementoStack mementoStack = new MementoStack(10);
+
     public CanvasPanel() {
         addMouseListener(this);
         addMouseMotionListener(this);
@@ -50,13 +48,11 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
     
     @Override
     public void paint(Graphics g) {
-        System.out.println("Canvas paint isDragging="+isDragging);
         Color orgColor = g.getColor();
         g.setColor(Color.white);
         g.fillRect(0, 0, getWidth(), getHeight());
         g.setColor(orgColor);
 
-        System.out.println(componentManager.getComponents().size());
         for (Component c : componentManager.getComponents()) {
             c.paint(g);
         }
@@ -96,6 +92,7 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
                 if (selectedComponent != null) {
                     selectedComponent.isSelect = true;
                     selectedComponent.startMove(currentPoint);
+                    mementoStack.push(selectedComponent.createMemento("update"));
                     view.updatePropertiesView(selectedComponent);
                 } else {
                     view.updatePropertiesView(null);
@@ -105,7 +102,7 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
             candidate = selectedTool;
             System.out.println("Mouse pressed at " + dragStartPoint.x + ":" + dragStartPoint.y);
         } else if (e.getButton() == MouseEvent.BUTTON3) {
-
+            cancelAction();
         }
         repaint();
     }
@@ -116,20 +113,32 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
             cancelAction();
             return;
         }
-        
+
         currentPoint = e.getPoint();
         System.out.println("Mouse released at " + currentPoint.x + ":" + currentPoint.y);
+        
+        if (currentPoint.x == dragStartPoint.x && currentPoint.y == dragStartPoint.y) {
+            if (canceled || selectedComponent != null)
+                mementoStack.pop();
+        }
 
         isDragging = false;
         candidate = null;
         if (!canceled && selectedTool == Tool.LINE) {
             Line line = createLine();
+            mementoStack.push(line.createMemento("create"));
             componentManager.addComponent(line);
             updateState(line);
         } else if (!canceled && (selectedTool == Tool.BORDER || selectedTool == Tool.BOX || selectedTool == Tool.FILL)) {
             Box box = createBox();
+            mementoStack.push(box.createMemento("create"));
             componentManager.addComponent(box);
             updateState(box);
+        } else if (!canceled && selectedTool == Tool.IMAGE) {
+            Picture pic = createPicture();
+            mementoStack.push(pic.createMemento("create"));
+            componentManager.addComponent(pic);
+            updateState(pic);
         } else if (!canceled && selectedTool == Tool.SELECT) {
             if (selectedComponent != null && selectedComponent.isMoving()) {
                 selectedComponent.endMove();
@@ -139,6 +148,14 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
         repaint();
     }
 
+    private Picture createPicture() {
+        Picture picture = new Picture();
+        picture.x = currentPoint.x;
+        picture.y = currentPoint.y;
+        picture.z = maxZ++;
+        return picture;
+    }
+
     protected void cancelAction() {
         canceled = true;
         dragStartPoint = null;
@@ -146,6 +163,7 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
         isDragging = false;
         if (selectedComponent != null && selectedComponent.isMoving()) {
             selectedComponent.cancelMove();
+            mementoStack.pop();
         }
     }
 
@@ -199,6 +217,7 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
     public void mouseExited(MouseEvent e) {}
 
     public void mouseDragged(MouseEvent e) {
+        if (currentPoint == null) currentPoint = e.getPoint();
         Point prevPoint = new Point(currentPoint);
         currentPoint = e.getPoint();
         if (selectedComponent != null && selectedComponent.isMoving()) {
@@ -216,12 +235,13 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
         String name = (String) m.getValueAt(e.getFirstRow(), 0);
         String value = (String) m.getValueAt(e.getFirstRow(), 1);
         try {
+            mementoStack.push(selectedComponent.createMemento("update"));
             selectedComponent.updateProperty(name, value);
             componentManager.updateOrder();
         } catch (Exception ex) {
             ex.printStackTrace();
-            view.updatePropertiesView(selectedComponent);
         }
+        view.updatePropertiesView(selectedComponent);
         repaint();
     }
 
@@ -249,30 +269,62 @@ public class CanvasPanel extends JPanel implements MouseListener, MouseMotionLis
     public void keyReleased(KeyEvent e) {
         int code = e.getKeyCode();
         int mod = e.getModifiers();
-        System.out.println("KeyRelease "+code+":"+mod);
         
         if (code == KeyEvent.VK_DELETE) {
-            if (selectedComponent != null) {
-                cancelAction();
-                componentManager.removeComponent(selectedComponent);
-                selectedComponent = null;
-                updateState(null);
-            }
+            delete();
         } else if (code == KeyEvent.VK_C && mod == KeyEvent.CTRL_MASK) {
-            System.out.println("Copy");
-            if (selectedComponent != null) {
-                copiedComponent = selectedComponent.copy();
-            }
+            copy();
         } else if (code == KeyEvent.VK_V && mod == KeyEvent.CTRL_MASK) {
-            System.out.println("Past");
-            if (copiedComponent != null) {
-                Component copy = copiedComponent.copy();
-                copy.x = currentPoint.x;
-                copy.y = currentPoint.y;
-                componentManager.addComponent(copy);
-                updateState(copy);
-            }
+            paste();
+        } else if (code == KeyEvent.VK_Z && mod == KeyEvent.CTRL_MASK) {
+            undo();
         }
+    }
+
+    public void delete() {
+        if (selectedComponent != null) {
+            cancelAction();
+            mementoStack.push(selectedComponent.createMemento("delete"));
+            componentManager.removeComponent(selectedComponent);
+            selectedComponent = null;
+            updateState(null);
+        }
+    }
+
+    public void copy() {
+        if (selectedComponent != null) {
+            copiedComponent = selectedComponent.copy();
+        }
+    }
+
+    public void paste() {
+        if (copiedComponent != null) {
+            Component copy = copiedComponent.copy();
+            copy.x = currentPoint.x;
+            copy.y = currentPoint.y;
+            componentManager.addComponent(copy);
+            updateState(copy);
+        }
+    }
+
+    public void undo() {
+        Memento memento = mementoStack.pop();
+        if (memento == null) {
+            return;
+        }
+
+        if (memento.getCommand().equalsIgnoreCase("delete")) {
+            Component component = memento.getRestoredComponent();
+            componentManager.addComponent(component);
+        } else if (memento.getCommand().equalsIgnoreCase("update")) {
+            Component component = memento.getComponent();
+            component.restore(memento);
+        } else if (memento.getCommand().equalsIgnoreCase("create")) {
+            Component component = memento.getComponent();
+            componentManager.removeComponent(component);
+            updateState(null);
+        }
+        repaint();
     }
 
     private void updateState(Component c) {
