@@ -8,11 +8,18 @@ import java.util.TreeMap;
  */
 public class Memento {
 
+    public static enum Command { Create, Update, Delete };
+
+
     private Component component;
     private Map<String, Object> properties;
-    private String command;
+    private Command command;
 
-    public Memento(Component component, String command) {
+    public Memento(Command command){
+        this.command = command;
+    }
+    
+    public Memento(Component component, Command command) {
         this.command = command;
         this.component = component;
         properties = new TreeMap<String, Object>();
@@ -35,7 +42,7 @@ public class Memento {
         return properties;
     }
 
-    public String getCommand() {
+    public Command getCommand() {
         return command;
     }
 

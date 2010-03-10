@@ -7,6 +7,9 @@ package mockdesigner;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.util.List;
+import javax.swing.event.TableModelEvent;
 import org.jdesktop.application.Action;
 import org.jdesktop.application.ResourceMap;
 import org.jdesktop.application.SingleFrameApplication;
@@ -14,6 +17,7 @@ import org.jdesktop.application.FrameView;
 import org.jdesktop.application.TaskMonitor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
@@ -27,12 +31,25 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 import mockdesigner.component.Box;
 import mockdesigner.component.Component;
 import mockdesigner.component.Line;
+import mockdesigner.component.Memento;
 import mockdesigner.component.Picture;
+import mockdesigner.tool.BorderTool;
+import mockdesigner.tool.BoxTool;
+import mockdesigner.tool.ComponentListener;
+import mockdesigner.tool.DrawingListener;
+import mockdesigner.tool.DrawingTool;
+import mockdesigner.tool.FillTool;
+import mockdesigner.tool.LineTool;
+import mockdesigner.tool.PictureTool;
+import mockdesigner.tool.SelectTool;
+import mockdesigner.tool.Tool;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
@@ -42,18 +59,41 @@ import org.jdom.output.XMLOutputter;
 /**
  * The application's main frame.
  */
-public class MockDesignerView extends FrameView  {
+public class MockDesignerView extends FrameView implements ComponentListener, DrawingListener, TableModelListener, KeyListener {
 
+    public static String APP_NAME = "MockDesigner";
+
+    /** 前景色 */
     public Color color1 = Color.black;
+    /** 背景色 */
     public Color color2 = Color.white;
 
+    /** キャンバスへの参照 */
     private CanvasPanel canvasPanel;
 
+    /** プロパティテーブルのモデル */
     private DefaultTableModel model;
 
+    /** 現在のファイル */
     private File file;
-    public static String APP_NAME = "MockDesigner";
+
+    /** ファイルが更新されているか */
     private boolean isDirty = false;
+
+    /** Z座標 */
+    private int currentZ = 0;
+
+    private List<Component> copiedComponent;
+
+    private Tool       currentTool;
+    private SelectTool selectTool = new SelectTool();
+    private LineTool   lineTool   = new LineTool();
+    private BorderTool borderTool = new BorderTool();
+    private BoxTool    boxTool    = new BoxTool();
+    private FillTool   fillTool   = new FillTool();
+    private PictureTool pictureTool = new PictureTool();
+
+    private ComponentManager manager = ComponentManager.getInstance();
 
     public MockDesignerView(SingleFrameApplication app) {
         super(app);
@@ -118,14 +158,20 @@ public class MockDesignerView extends FrameView  {
         color1Box.setBackground(color1);
         color2Box.setBackground(color2);
         canvasPanel = (CanvasPanel) canvas;
-        canvasPanel.setView(this);
+        canvasPanel.addKeyListener(this);
 
         model = (DefaultTableModel) propertyTable.getModel();
-        model.addTableModelListener(canvasPanel);
+        model.addTableModelListener(this);
 
         openFileChooser.setFileFilter(new FileNameExtensionFilter("XMLファイル", "xml"));
         saveFileChooser.setFileFilter(new FileNameExtensionFilter("XMLファイル", "xml"));
 
+        init();
+    }
+
+    private void init() {
+        selectedToolChanged(selectTool);
+        manager.addComponentListener(this);
     }
 
     private void updateCoordinate(Point p) {
@@ -135,26 +181,6 @@ public class MockDesignerView extends FrameView  {
 
     private boolean isOutOfBounds(Point p) {
         return p.x < 0 || canvas.getWidth() < p.x || p.y < 0 || canvas.getHeight() < p.y;
-    }
-
-    public void updatePropertiesView(Component component) {
-        Map<String, Object> properties = null;
-        if (component != null)
-            properties = component.getProperties();
-        
-        model.removeTableModelListener(canvasPanel);
-        while (model.getRowCount() != 0) {
-            model.removeRow(0);
-        }
-        if (properties == null) return;
-
-        for (Map.Entry<String, Object> entry : properties.entrySet()) {
-            Object[] data = new Object[2];
-            data[0] = entry.getKey();
-            data[1] = entry.getValue();
-            model.addRow(data);
-        }
-        model.addTableModelListener(canvasPanel);
     }
 
     @Action
@@ -218,14 +244,6 @@ public class MockDesignerView extends FrameView  {
         canvas.setMinimumSize(new java.awt.Dimension(240, 240));
         canvas.setName("canvas"); // NOI18N
         canvas.setPreferredSize(new java.awt.Dimension(240, 240));
-        canvas.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                canvasMousePressed(evt);
-            }
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                canvasMouseReleased(evt);
-            }
-        });
         canvas.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
             public void mouseDragged(java.awt.event.MouseEvent evt) {
                 canvasMouseDragged(evt);
@@ -569,18 +587,6 @@ public class MockDesignerView extends FrameView  {
     private void canvasMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_canvasMouseMoved
         updateCoordinate(evt.getPoint());
     }//GEN-LAST:event_canvasMouseMoved
-
-    private void canvasMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_canvasMouseDragged
-        updateCoordinate(evt.getPoint());
-    }//GEN-LAST:event_canvasMouseDragged
-
-    private void canvasMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_canvasMousePressed
-        
-    }//GEN-LAST:event_canvasMousePressed
-
-    private void canvasMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_canvasMouseReleased
-        
-    }//GEN-LAST:event_canvasMouseReleased
     
     private void color1BoxMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_color1BoxMouseClicked
         Color c = JColorChooser.showDialog(null, null, color1);
@@ -598,29 +604,55 @@ public class MockDesignerView extends FrameView  {
         }
     }//GEN-LAST:event_color2BoxMouseClicked
 
+    private void canvasMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_canvasMouseDragged
+        updateCoordinate(evt.getPoint());
+    }//GEN-LAST:event_canvasMouseDragged
+
+    private void selectedToolChanged(mockdesigner.tool.Tool tool) {
+        manager.unselectAll();
+
+        if (currentTool instanceof DrawingTool) {
+            ((DrawingTool) tool).removeDrawingListener(this);
+        }
+        
+        if (tool instanceof DrawingTool) {
+            DrawingTool t = (DrawingTool) tool;
+            t.setColor1(color1);
+            t.setColor2(color2);
+            t.setCurrentZ(currentZ);
+            ((DrawingTool) tool).addDrawingListener(this);
+        }
+        canvasPanel.setTool(tool);
+    }
+
     @Action
     public void selectSelect() {
-        canvasPanel.selectedTool = Tool.SELECT;
+        selectedToolChanged(selectTool);
     }
 
     @Action
     public void selectLine() {
-        canvasPanel.selectedTool = Tool.LINE;
-    }
-
-    @Action
-    public void selectBox() {
-        canvasPanel.selectedTool = Tool.BOX;
+        selectedToolChanged(lineTool);
     }
 
     @Action
     public void selectBorder() {
-        canvasPanel.selectedTool = Tool.BORDER;
+        selectedToolChanged(borderTool);
+    }
+
+    @Action
+    public void selectBox() {
+        selectedToolChanged(boxTool);
     }
 
     @Action
     public void selectFill() {
-        canvasPanel.selectedTool = Tool.FILL;
+        selectedToolChanged(fillTool);
+    }
+
+    @Action
+    public void selectImage() {
+        selectedToolChanged(pictureTool);
     }
 
     @Action
@@ -663,7 +695,7 @@ public class MockDesignerView extends FrameView  {
 
         Iterator it = page.getChildren().iterator();
         updatePropertiesView(null);
-        canvasPanel.componentManager.clearAll();
+        manager.clearAll();
         while(it.hasNext()) {
             Element elem = (Element) it.next();
             Component compnent = loadComponent(elem);
@@ -673,6 +705,7 @@ public class MockDesignerView extends FrameView  {
         canvasPanel.setSize(newW, newH);
         canvasPanel.repaint();
         isDirty = false;
+        MementoManager.getInstance().clearAll();
         updateTitle();
     }
     
@@ -774,7 +807,8 @@ public class MockDesignerView extends FrameView  {
             
             file = null;
             updatePropertiesView(null);
-            canvasPanel.componentManager.clearAll();
+            manager.clearAll();
+            MementoManager.getInstance().clearAll();
             isDirty = false;
         } catch(Exception e) {
             return;
@@ -784,10 +818,6 @@ public class MockDesignerView extends FrameView  {
         canvasPanel.repaint();
     }
 
-    @Action
-    public void selectImage() {
-        canvasPanel.selectedTool = Tool.IMAGE;
-    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton borderButton;
@@ -828,4 +858,107 @@ public class MockDesignerView extends FrameView  {
     private int busyIconIndex = 0;
 
     private JDialog aboutBox;
+
+    public void notifyValueChanged() {
+        isDirty(true);
+        canvasPanel.repaint();
+    }
+
+    public void notifySelectionChanged(List<Component> components) {
+        updatePropertiesView(components);
+    }
+
+    public void componentCreated(Component component) {
+        currentZ = component.z + 1;
+        selectedToolChanged(selectTool);
+        selectButton.setSelected(true);
+    }
+
+    public void shouldRepaint() {
+        canvasPanel.repaint();
+    }
+
+    public void tableChanged(TableModelEvent e) {
+        TableModel m = (TableModel) e.getSource();
+        String name = (String) m.getValueAt(e.getFirstRow(), 0);
+        String value = (String) m.getValueAt(e.getFirstRow(), 1);
+        try {
+            List<Component> selectedComponents = manager.getSelectedComponents();
+            MementoManager.getInstance().push(manager.getSelectedMementos(Memento.Command.Update));
+// TODO:複数選択のとき
+            selectedComponents.get(0).updateProperty(name, value);
+            manager.updateOrder();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        updatePropertiesView(manager.getSelectedComponents());
+        canvasPanel.repaint();
+    }
+    
+    public void updatePropertiesView(List<Component> components) {
+        Map<String, Object> properties = null;
+        Component component = null;
+        // TODO:複数選択のとき。
+        if (components != null && components.size() >= 1) component = components.get(0);
+
+        if (component != null)
+            properties = component.getProperties();
+
+        model.removeTableModelListener(this);
+        while (model.getRowCount() != 0) {
+            model.removeRow(0);
+        }
+        if (properties == null) return;
+
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            Object[] data = new Object[2];
+            data[0] = entry.getKey();
+            data[1] = entry.getValue();
+            model.addRow(data);
+        }
+        model.addTableModelListener(this);
+    }
+
+    public void keyTyped(KeyEvent e) {}
+
+    public void keyPressed(KeyEvent e) {}
+
+    public void keyReleased(KeyEvent e) {
+        int code = e.getKeyCode();
+        int mod  = e.getModifiers();
+
+        if (code == KeyEvent.VK_Z && mod == KeyEvent.CTRL_MASK) {
+            MementoManager.getInstance().undo();
+        } else if (code == KeyEvent.VK_DELETE) {
+            delete();
+        } else if (isCopyKey(e)) {
+            copy();
+        } else if (isPasteKey(e)) {
+            paste();
+        }
+    }
+
+    private boolean isCopyKey(KeyEvent e) {
+        return (e.getKeyCode() == KeyEvent.VK_C && e.getModifiers() == KeyEvent.CTRL_MASK);
+    }
+
+    private boolean isPasteKey(KeyEvent e) {
+        return (e.getKeyCode() == KeyEvent.VK_V && e.getModifiers() == KeyEvent.CTRL_MASK);
+    }
+
+    private void delete() {
+        MementoManager.getInstance().push(manager.getSelectedMementos(Memento.Command.Delete));
+        manager.deleteSelectedComponents();
+        manager.notifyValueChanged();
+    }
+
+    private void copy() {
+        copiedComponent = manager.copySelectedComponents();
+    }
+
+    private void paste() {
+        MementoManager.getInstance().push(manager.getSelectedMementos(Memento.Command.Create));
+        manager.pasteComponents(copiedComponent);
+        manager.notifyValueChanged();
+    }
 }

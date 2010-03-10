@@ -45,6 +45,19 @@ public abstract class Component {
 
     protected static final int RADIUS = 4;
 
+    /**
+     * 選択状態を切り替える。
+     * 
+     * 現在選択されていたならば、非選択状態へ。
+     * 現在選択されていなかったならば、選択状態へ。
+     *
+     * @return 切り替え後の選択状態
+     */
+    public boolean flipSelection() {
+        isSelect = !isSelect;
+        return isSelect;
+    }
+
     protected List<Field> getProperyFields() {
         List<Field> fields = new ArrayList<Field>();
         for (Class clazz = this.getClass(); clazz != Object.class; clazz = clazz.getSuperclass()) {
@@ -80,7 +93,7 @@ public abstract class Component {
         return properties;
     }
 
-    public Memento createMemento(String command) {
+    public Memento createMemento(Memento.Command command) {
         Memento memento = new Memento(this, command);
         for (Map.Entry<String, Object> entry : getProperties().entrySet()) {
             memento.addProperty(entry.getKey(), entry.getValue());
@@ -113,7 +126,7 @@ public abstract class Component {
     public abstract boolean isOn(Point p);
 
     public void startMove(Point p) {
-        mementoForCancel = createMemento("update");
+        mementoForCancel = createMemento(Memento.Command.Update);
         isMoving = true;
     }
     
@@ -174,7 +187,7 @@ public abstract class Component {
     public Component copy() {
         try {
             Component copy = (Component) getClass().newInstance();
-            copy.restore(createMemento("copy"));
+            copy.restore(createMemento(Memento.Command.Create));
             return copy;
         } catch (Exception e) {
             e.printStackTrace();
@@ -237,5 +250,5 @@ public abstract class Component {
     }
 
     public abstract String getComponentName();
-    
+
 }

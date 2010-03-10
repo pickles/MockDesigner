@@ -2,7 +2,7 @@ package mockdesigner;
 
 import java.util.ArrayList;
 import java.util.List;
-import mockdesigner.component.Memento;
+import mockdesigner.component.MementoGroup;
 
 /**
  * @author Manabu Shibata
@@ -10,14 +10,14 @@ import mockdesigner.component.Memento;
 public class MementoStack {
 
     private int max = 10;
-    private List<Memento> stack;
+    private List<MementoGroup> stack;
 
     public MementoStack(int max) {
         this.max = max;
-        stack = new ArrayList<Memento>();
+        stack = new ArrayList<MementoGroup>();
     }
 
-    public void push(Memento memento) {
+    public void push(MementoGroup memento) {
         stack.add(memento);
         System.out.println("Memento add " + stack.size());
         if (stack.size() > max) {
@@ -26,9 +26,13 @@ public class MementoStack {
         }
     }
 
-    public Memento pop() {
+    public MementoGroup pop() {
         if (stack.size() == 0) return null;
         System.out.println("Memento pop " + stack.size());
         return stack.remove(stack.size()-1);
+    }
+
+    void clearAll() {
+        stack.clear();
     }
 }
